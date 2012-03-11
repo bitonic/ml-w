@@ -11,6 +11,8 @@ import Control.Monad.Error
 import Control.Monad.State
 import Data.List hiding (find)
 
+import Text.PrettyPrint
+
 import AST
 import Applicative
 
@@ -20,10 +22,10 @@ data Type
     = TyVar TyVar
     | TyArr Type Type
     | TyGen Int
-    deriving (Eq, Show)
+    deriving Eq
 
 data Scheme = Scheme Int Type
-    deriving (Eq, Show)
+    deriving Eq
 
 type Subst = [(TyVar, Type)]
     
@@ -148,11 +150,24 @@ typecheck sctx se = (\(_, t) -> quantify (tv t) t) <$> go sctx se
 typeExpr :: [Assump] -> Expr -> Either TypeError Scheme
 typeExpr ctx e = evalState (runErrorT (typecheck ctx e)) [(1::Int)..]
 
-typeProgram :: Program -> Either TypeError [(Id, Scheme)]
-typeProgram (Program p') = evalState (runErrorT (go [] p')) [(1 :: Int)..]
+typeProgram :: Program -> Either TypeError ([(Id, Scheme)], Scheme)
+typeProgram (Program p' e') = evalState (runErrorT (go [] p')) [(1 :: Int)..]
   where
-    go ctx []           = return . map (\(i :>: sc) -> (i, sc)) $ ctx
+    go ctx []           =
+        let ass = map (\(i :>: sc) -> (i, sc)) $ ctx
+        in  (ass,) <$> typecheck ctx e'
     go ctx ((i, e) : p) =
         do put [1..]
            sc <- typecheck ctx e
            go (ctx ++ [(i :>: sc)]) p
+
+-- Pretty printing
+
+type' :: Type -> Doc
+type' (TyGen i)             = int i
+type' (TyVar i)             = text "v" <> int i
+type' (TyArr t@(TyGen _) r) = type' t <+> text "->" <+> type' r
+type' (TyArr l           r) = parens (type' l) <+> text "->" <+> type' r
+
+instance Show Type where
+    show = render . type'
