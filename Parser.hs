@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 module Parser
     ( parseExpr
     , parseExpr'
@@ -7,16 +8,14 @@ module Parser
     , parseProgram'
     ) where             
 
-import Control.Applicative
 import Control.Monad
-import Control.Monad.Identity hiding (fix)
-import Text.ParserCombinators.Parsec hiding ((<|>), many)
-import Text.ParserCombinators.Parsec.Token (GenLanguageDef (..))
+import Text.ParserCombinators.Parsec
+import Text.ParserCombinators.Parsec.Token hiding (parens)
 import qualified Text.ParserCombinators.Parsec.Token as P
 
 import AST
 
-mlDef :: GenLanguageDef String () Identity
+mlDef :: LanguageDef ()
 mlDef = LanguageDef
         { commentStart    = "/*"
         , commentEnd      = "*/"
@@ -72,3 +71,18 @@ instance Read Expr where
             e <- appExpr
             State {stateInput = input} <- getParserState
             return (e, input)
+
+
+-- parsec 2 doeesn't have an Applicative instance...
+
+(<$>)  :: Functor f => (a -> b) -> f a -> f b
+(<$>)  = fmap
+
+(<*>)  :: Monad m => m (a -> b) -> m a -> m b
+(<*>)  = ap
+
+(*>)   :: Monad m => m a -> m b -> m b
+(*>)   = (>>)
+
+(<*)   :: Monad m => m a -> m b -> m a
+m <* n =  do x <- m; n; return x
