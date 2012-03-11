@@ -1,7 +1,8 @@
 module AST
     ( Id
     , Expr (..)
-    , Program
+    , Decl
+    , Program (..)
     ) where
 
 type Id = String
@@ -12,6 +13,8 @@ data Expr
     | App Expr Expr
     | Let Id Expr Expr
     | Fix Id Expr
-    deriving (Eq, Show)
+    deriving Eq
 
-type Program = [Expr]
+type Decl = (Id, Expr)
+
+newtype Program = Program {unProgram :: [Decl]}

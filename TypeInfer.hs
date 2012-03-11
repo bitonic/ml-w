@@ -139,5 +139,5 @@ typecheck' sctx se = (\(_, t) -> quantify (tv t) t) <$> go sctx se
            s2       <- unify (apply s1 t) a
            return (s2 @@ s1, apply s2 a)
 
-typecheck :: [Assump] -> Expr -> Either TypeError Scheme
-typecheck ctx e = evalState (runErrorT (typecheck' ctx e)) [(1 :: Int)..]
+typeExpr :: [Assump] -> Expr -> Either TypeError Scheme
+typeExpr ctx e = evalState (runErrorT (typecheck' ctx e)) [(1 :: Int)..]

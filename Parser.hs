@@ -31,44 +31,50 @@ mlDef = LanguageDef
         , caseSensitive   = True
         }
 
-lexer  = P.makeTokenParser mlDef
+lexer     = P.makeTokenParser mlDef
 
-lid    = P.identifier lexer
+lid       = P.identifier lexer
 
-llet   = P.reserved lexer "let"
-lfix   = P.reserved lexer "fix"
-lin    = P.reserved lexer "in"
+llet      = P.reserved lexer "let"
+lfix      = P.reserved lexer "fix"
+lin       = P.reserved lexer "in"
 
-llam   = P.reservedOp lexer "\\"
-ldot   = P.reservedOp lexer "."
-lequal = P.reservedOp lexer "="
-lsemi  = P.reservedOp lexer ";"
+llam      = P.reservedOp lexer "\\"
+ldot      = P.reservedOp lexer "."
+lequal    = P.reservedOp lexer "="
+lsemi     = P.reservedOp lexer ";"
 
-parens = P.parens lexer
+parens    = P.parens lexer
 
-var    = Var <$> lid
-lam    = flip (foldr Lam) <$> (llam *> many1 lid) <*> (ldot *> expr)
-let'   = Let <$> (llet *> lid) <*> (lequal *> expr) <*> (lin *> expr)
-fix    = Fix <$> (lfix *> lid) <*> (ldot *> expr)
-expr   = foldl App <$> p <*> many p
-  where p = parens p <|> lam <|> try let' <|> try fix <|> var <?> "expression"
+var       = Var <$> lid
+lam       = flip (foldr Lam) <$> (llam *> many1 lid) <*> (ldot *> expr)
+let'      = Let <$> (llet *> lid) <*> (lequal *> expr) <*> (lin *> expr)
+fix       = Fix <$> (lfix *> lid) <*> (ldot *> expr)
+expr      = foldl App <$> p <*> many p
+  where p = parens expr <|> lam <|> try let' <|> try fix <|> var
+            <?> "expression"
 
-program = sepBy1 expr lsemi <* lsemi
+decl      = (,) <$> lid <*> (lequal *> expr <* lsemi)
+program   = Program <$> many decl
 
-parseExpr       :: FilePath -> IO (Either ParseError Expr)
-parseExpr fname =  parse expr fname <$> readFile fname
-parseExpr'      :: String -> Either ParseError Expr
-parseExpr'      = parse expr ""
+parseExpr     :: String -> Either ParseError Expr
+parseExpr     = parse expr ""
+parseExpr'    :: FilePath -> IO (Either ParseError Expr)
+parseExpr' fn =  parse expr fn <$> readFile fn
 
-parseProgram       :: FilePath -> IO (Either ParseError Program)
-parseProgram fname = parse program fname <$> readFile fname
-parseProgram'      :: String -> Either ParseError Program
-parseProgram'      = parse program ""
+parseProgram     :: String -> Either ParseError Program
+parseProgram     = parse program ""
+parseProgram'    :: FilePath -> IO (Either ParseError Program)
+parseProgram' fn = parse program fn <$> readFile fn
+
+readParse :: Parser a -> String -> [(a, String)]
+readParse p = either (const []) (: []) . parse p' ""
+    where p' = do x <- p
+                  State {stateInput = input} <- getParserState
+                  return (x, input)
 
 instance Read Expr where
-    readsPrec _ = either (const []) (: []) . parse p ""
-      where
-        p = do
-            e <- expr
-            State {stateInput = input} <- getParserState
-            return (e, input)
+    readsPrec _ = readParse expr
+
+instance Read Program where
+    readsPrec _ = readParse program
