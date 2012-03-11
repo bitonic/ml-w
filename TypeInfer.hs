@@ -1,5 +1,11 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, TupleSections #-}
-module TypeInfer where
+module TypeInfer 
+    ( TyVar
+    , Type (TyGen, TyArr)
+    , Scheme (..)
+    , typeExpr
+    , typeProgram
+    ) where
 
 import Control.Monad.Error
 import Control.Monad.State
@@ -113,8 +119,8 @@ quantify tvs t = Scheme len (apply sub t)
     len = length tvs
     sub = map (\ix -> (tvs !! ix, TyGen ix)) [0..len-1]
     
-typecheck' :: MonadInfer m => [Assump] -> Expr -> m Scheme
-typecheck' sctx se = (\(_, t) -> quantify (tv t) t) <$> go sctx se
+typecheck :: MonadInfer m => [Assump] -> Expr -> m Scheme
+typecheck sctx se = (\(_, t) -> quantify (tv t) t) <$> go sctx se
   where
     go ctx (Var i)       = ([] ,) <$> (find ctx i >>= freshen)
     go ctx (Lam i e)     =
@@ -140,4 +146,13 @@ typecheck' sctx se = (\(_, t) -> quantify (tv t) t) <$> go sctx se
            return (s2 @@ s1, apply s2 a)
 
 typeExpr :: [Assump] -> Expr -> Either TypeError Scheme
-typeExpr ctx e = evalState (runErrorT (typecheck' ctx e)) [(1 :: Int)..]
+typeExpr ctx e = evalState (runErrorT (typecheck ctx e)) [(1::Int)..]
+
+typeProgram :: Program -> Either TypeError [(Id, Scheme)]
+typeProgram (Program p') = evalState (runErrorT (go [] p')) [(1 :: Int)..]
+  where
+    go ctx []           = return . map (\(i :>: sc) -> (i, sc)) $ ctx
+    go ctx ((i, e) : p) =
+        do put [1..]
+           sc <- typecheck ctx e
+           go (ctx ++ [(i :>: sc)]) p
