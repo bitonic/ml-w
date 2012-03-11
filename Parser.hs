@@ -50,15 +50,15 @@ var       = Var <$> lid
 lam       = flip (foldr Lam) <$> (llam *> many1 lid) <*> (ldot *> expr)
 let'      = Let <$> (llet *> lid) <*> (lequal *> expr) <*> (lin *> expr)
 fix       = Fix <$> (lfix *> lid) <*> (ldot *> expr)
-expr      = foldl App <$> p <*> many p
-  where p = parens expr <|> lam <|> try let' <|> try fix <|> var
+expr      = lam <|> (foldl App <$> p <*> many p)
+  where p = parens (lam <|> expr) <|> try let' <|> try fix <|> var
             <?> "expression"
 
 decl      = (,) <$> lid <*> (lequal *> expr <* lsemi)
-program   = Program <$> many decl
+program   = Program <$> (many decl <* eof)
 
 parseExpr     :: String -> Either ParseError Expr
-parseExpr     = parse expr ""
+parseExpr     = parse (expr <* eof) ""
 parseExpr'    :: FilePath -> IO (Either ParseError Expr)
 parseExpr' fn =  parse expr fn <$> readFile fn
 
