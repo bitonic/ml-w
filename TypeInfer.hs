@@ -1,8 +1,9 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, TupleSections #-}
 module TypeInfer 
     ( TyVar
-    , Type (TyGen, TyArr)
+    , Type (..)
     , Scheme (..)
+    , TypeError (..)
     , typeExpr
     , typeProgram
     ) where
@@ -100,7 +101,7 @@ fresh = TyVar <$> gets head <* modify tail
 
 freshen :: MonadInfer m => Scheme -> m Type
 freshen (Scheme gens t) =
-    do sub <- zip [1..gens] <$> mapM (const fresh) [1..gens]
+    do sub <- zip [0..] <$> mapM (const fresh) [1..gens]
        return $ go sub t
   where
     go sub (TyGen i) =
@@ -160,7 +161,7 @@ typeProgram (Program p' e') = evalState (runErrorT (go [] p')) [(1 :: Int)..]
         do put [1..]
            sc <- typecheck ctx e
            go (ctx ++ [(i :>: sc)]) p
-
+ 
 -- Pretty printing
 
 type' :: Type -> Doc
@@ -171,3 +172,6 @@ type' (TyArr l           r) = parens (type' l) <+> text "->" <+> type' r
 
 instance Show Type where
     show = render . type'
+
+instance Show Scheme where
+    show (Scheme _ t) = render . type' $ t
