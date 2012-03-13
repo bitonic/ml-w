@@ -8,13 +8,20 @@
 --   variables. This could be checked statically having a separate datatype
 --   without free type variables, but I compromised for clarity and brevity.
 module TypeInfer 
-    ( TyVar
+    ( -- * Data types
+      TyVar
     , Type (..)
     , Scheme (..)
     , Assump (..)
+      
+      -- * Type inference
     , TypeError (..)
     , typeExpr
     , typeProgram
+      
+      -- * Pretty printing
+    , prettyType
+    , prettyScheme
     ) where
 
 import Control.Monad.Error
@@ -232,6 +239,12 @@ type' (TyGen i)               = int i
 type' (TyVar i)               = text "v" <> int i
 type' (TyArr t1@(TyGen _) t2) = type' t1 <+> text "->" <+> type' t2
 type' (TyArr t1           t2) = parens (type' t1) <+> text "->" <+> type' t2
+
+prettyType :: Type -> Doc
+prettyType = type'
+
+prettyScheme :: Scheme -> Doc
+prettyScheme (Scheme _ t) = prettyType t
 
 instance Show Type where
     show = render . type'
