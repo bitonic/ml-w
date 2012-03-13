@@ -10,6 +10,7 @@ module TypeInfer
     ( TyVar
     , Type (..)
     , Scheme (..)
+    , Assump (..)
     , TypeError (..)
     , typeExpr
     , typeProgram
