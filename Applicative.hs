@@ -1,4 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
+-- | This module exists only because parsec 2 doesn't have an
+--   'Applicative' instance, and in general because it's annoying to add
+--   'Applicative' to all the constraints.
 module Applicative where
 
 import Control.Monad

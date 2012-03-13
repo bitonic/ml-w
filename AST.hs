@@ -1,15 +1,45 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+-- | This module defines some datatypes to represent a minimal ML-like
+--   language, plus parsing and pretty-printing functions.
+--
+--   The syntax is:
+--
+-- @
+-- program     ::= declaration ';' program | expression
+-- declaration ::= id '=' expression
+-- id          ::= [a-zA-Z][a-zA-Z0-9_]*
+-- ids         ::= id+
+-- expression  ::= id
+--              | '(' '\' ids . expression ')'
+--              | '(' expression expression ')'
+--              | '(' 'let' id '=' expression 'in' expression ')'
+--              | '(' 'fix' id . expression ')'
+-- @
+--
+--   We'll omit parenthesis in the usual way @a b c@ is equivalent to @(a b) c@.
+--
+--   Example:
+--
+-- @
+-- s = \\ x y z . x z (y z);
+-- k = \\ x y . x;
+-- i = \\ x . x;
+-- k i;
+-- @
 module AST
-    ( Id
+    ( -- * Abstract syntax tree
+      Id
     , Expr (..)
     , Decl
     , Program (..)
       
+      -- * Parsing
     , parseExpr
     , parseExpr'
     , parseProgram
     , parseProgram'
       
+      -- * Pretty printing
     , prettyExpr
     , prettyDecl
     , prettyProgram
@@ -26,18 +56,30 @@ import qualified Text.PrettyPrint as PP
 
 import Applicative
 
+-- | An identifier (predictably a 'String').
 type Id = String
 
+-- | Data type representing lambda-calculus expressions.
 data Expr
     = Var Id
+      -- ^ A variable.
     | Lam Id Expr
+      -- ^ A lambda abstraction.
     | App Expr Expr
+      -- ^ An expression applied to another.
     | Let Id Expr Expr
+      -- ^ Polymorphic let.
     | Fix Id Expr
+      -- ^ Fixed point combinator (bye bye normalization).
     deriving Eq
 
+-- | A declaration (binds a certain expression to a variable). We add
+--   this abstraction on top so that we can type programs more easily.
 type Decl = (Id, Expr)
 
+-- | A 'Program' is a list of declaration and an expression
+--   representing what the program does. Each declaration can use
+--   previous declarations only (no mutual recursion).
 data Program = Program [Decl] Expr
     deriving Eq
 
