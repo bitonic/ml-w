@@ -22,7 +22,7 @@ import Data.List hiding (find)
 
 import Text.PrettyPrint
 
-import AST
+import ML
 import Applicative
 
 -- | A type variable. We use integers for easy generation of new variables.

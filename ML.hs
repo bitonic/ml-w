@@ -26,7 +26,7 @@
 -- i = \\ x . x;
 -- k i;
 -- @
-module AST
+module ML
     ( -- * Abstract syntax tree
       Id
     , Expr (..)
