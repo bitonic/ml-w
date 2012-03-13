@@ -4,7 +4,7 @@
 --   There is one minor annoyance: The 'Type' datatype distinguishes between
 --   free type variables and quantified type variable, but the exposed functions
 --   of this module should produce types completely free of free type
---   variables. This could be checked at runtime having a separate datatype
+--   variables. This could be checked statically having a separate datatype
 --   without free type variables, but I compromised for clarity and brevity.
 module TypeInfer 
     ( TyVar
