@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, TupleSections #-}
+
 -- | This module implements the W algorithm for the small language we are using.
 --
 --   There is one minor annoyance: The 'Type' datatype distinguishes between
@@ -99,7 +100,7 @@ data TypeError
       --   with an arrow type).
     | InfiniteType TyVar Type
       -- ^ The user is trying to construct an infinite type, e.g. 'a = a -> b'.
-    | UnboundVariable String
+    | UnboundVariable Id
       -- ^ Unbound variable (value, not type variable).
     | TypeError
       -- ^ Generic error, needed for the 'Error' instances.
@@ -108,8 +109,16 @@ data TypeError
 instance Error TypeError where
     noMsg = TypeError
 
+-- | A 'Monad' we use for type inference. We obviously want to throw
+--   'TypeError's (hence the 'MonadError') and we also want to generate fresh
+--   'TyVar's - to do that we keep a state with an infinite list of integers,
+--   initialized with @[1..]@.
+class (MonadError TypeError m, MonadState [Int] m) => MonadInfer m
+
+instance MonadInfer (ErrorT TypeError (State [Int]))
+
 -- | Unifies two types, according to Robinson's algorithm.
-unify :: MonadError TypeError m => Type -> Type -> m Subst
+unify :: MonadInfer m => Type -> Type -> m Subst
 unify (TyArr t1 t2) (TyArr t1' t2') =
     do s1 <- unify t1 t1'
        s2 <- unify (apply s1 t2) (apply s1 t2')
@@ -120,7 +129,7 @@ unify t1            t2              = throwError $ UnificationFail t1 t2
 
 -- | Binds a given 'TyVar' to a type. Fails throwing an 'InfiniteType' error if
 --   if the 'Type' already contains 'TyVar'.
-varBind :: MonadError TypeError m => TyVar -> Type -> m Subst
+varBind :: MonadInfer m => TyVar -> Type -> m Subst
 varBind tv t | t == TyVar tv   = return nullSubst
              | tv `elem` tvs t = throwError $ InfiniteType tv t
              | otherwise       = return (tv +-> t)
@@ -131,14 +140,6 @@ data Assump = Id :>: Scheme
 instance Types Assump where
     apply s (i :>: sc) = i :>: apply s sc
     tvs (_ :>: sc)     = tvs sc
-
--- | A 'Monad' we use for type inference. We obviously want to throw
---   'TypeError's (hence the 'MonadError') and we also want to generate fresh
---   'TyVar's - to do that we keep a state with an infinite list of integers,
---   initialized with @[1..]@.
-class (MonadError TypeError m, MonadState [Int] m) => MonadInfer m
-
-instance MonadInfer (ErrorT TypeError (State [Int]))
 
 -- | Gets a fresh type variable and wraps it in a type.
 fresh :: MonadInfer m => m Type
