@@ -30,6 +30,7 @@ module TypeInfer
 import Control.Monad.Error
 import Control.Monad.State
 import Data.List hiding (find)
+import Data.Maybe (fromMaybe)
 
 import Text.PrettyPrint
 
@@ -78,9 +79,7 @@ class Types t where
     tvs   :: t -> [TyVar]
 
 instance Types Type where
-    apply s (TyVar tv)  = case lookup tv s of
-                              Nothing -> TyVar tv
-                              Just t  -> t
+    apply s (TyVar tv)  = fromMaybe (TyVar tv) (lookup tv s)
     apply s (TyArr l r) = TyArr (apply s l) (apply s r)
     -- We do not replace 'TyGen's (they're quantified).
     apply _ t           = t
@@ -92,7 +91,7 @@ instance Types Type where
 -- | Useful instance on lists of types.
 instance Types a => Types [a] where
     apply s = map (apply s)
-    tvs     = nub . concat . map tvs
+    tvs     = nub . concatMap tvs
 
 instance Types Scheme where
     apply s (Scheme i t) = Scheme i (apply s t)
@@ -165,10 +164,7 @@ freshen (Scheme gens t) =
     do sub <- zip [0..] <$> mapM (const fresh) [1..gens]
        return $ go sub t
   where
-    go sub (TyGen i)     =
-        case lookup i sub of
-            Nothing -> error "Malformed Scheme"
-            Just v  -> v
+    go sub (TyGen i)     = fromMaybe (error "Malformed Scheme") (lookup i sub)
     go sub (TyArr t1 t2) = TyArr (go sub t1) (go sub t2)
     go _   t'            = t'
 
@@ -194,7 +190,7 @@ quantify tvs' t = Scheme len (apply sub t)
 typecheck :: MonadInfer m => [Assump] -> Expr -> m Scheme
 typecheck sctx se = (\(_, t) -> quantify (tvs t) t) <$> go sctx se
   where
-    go ctx (Var i)       = ((,) []) <$> (find ctx i >>= freshen)
+    go ctx (Var i)       = (,) [] <$> (find ctx i >>= freshen)
     go ctx (Lam i e)     =
         do t1       <- fresh
            (s1, t2) <- go ((i :>: Scheme 0 t1) : ctx) e
@@ -228,12 +224,12 @@ typeProgram :: Program -> Either TypeError ([(Id, Scheme)], Scheme)
 typeProgram (Program p' e') = evalState (runErrorT (go [] p')) [(1::Int)..]
   where
     go ctx []           =
-        let ass = map (\(i :>: sc) -> (i, sc)) $ ctx
-        in  ((,) ass) <$> typecheck ctx e'
+        let ass = map (\(i :>: sc) -> (i, sc)) ctx
+        in  (,) ass <$> typecheck ctx e'
     go ctx ((i, e) : p) =
         do put [1..]
            sc <- typecheck ctx e
-           go (ctx ++ [(i :>: sc)]) p
+           go (ctx ++ [i :>: sc]) p
  
 -------------------------------------------------------------------------------
 -- Pretty printing ------------------------------------------------------------
