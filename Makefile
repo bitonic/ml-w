@@ -11,7 +11,7 @@ DOCS_DIR= docs
 PROLOGUE= README
 HADDOCK_OPTS= -o $(DOCS_DIR) -p $(PROLOGUE) -h
 
-all: $(TARGETS)
+all:
 	ghc -o $(EXEC_NAME) $(GHC_OPTS) $(MAIN)
 
 docs:

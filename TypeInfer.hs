@@ -7,6 +7,9 @@
 --   of this module should produce types completely free of free type
 --   variables. This could be checked statically having a separate datatype
 --   without free type variables, but I compromised for clarity and brevity.
+--
+--   Partly inspired by the paper \"/Typing Haskell in Haskell/\" by Mark
+--   P. Jones, <http://web.cecs.pdx.edu/~mpj/thih/>.
 module TypeInfer 
     ( -- * Data types
       TyVar

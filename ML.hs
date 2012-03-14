@@ -18,7 +18,7 @@ expression  ::= id
              | '(' 'fix' id . expression ')'
 @
 
-We'll omit parenthesis in the usual way @a b c@ is equivalent to @(a b) c@.
+We'll omit parenthesis in the usual way - @a b c@ is equivalent to @(a b) c@.
 
 Example:
 
@@ -76,8 +76,9 @@ data Expr
       -- ^ Fixed point combinator (bye bye normalization).
     deriving Eq
 
--- | A declaration (binds a certain expression to a variable). We add
---   this abstraction on top so that we can type programs more easily.
+-- | A declaration (binds a certain expression to a variable). We add this
+--   abstraction on top of let so that we can write programs more easily
+--   (leaving let for local declarations).
 type Decl = (Id, Expr)
 
 -- | A 'Program' is a list of declaration and an expression
