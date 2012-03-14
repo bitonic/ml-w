@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, TupleSections #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances #-}
 
 -- | This module implements the W algorithm for the small language we are using.
 --
@@ -191,7 +191,7 @@ quantify tvs' t = Scheme len (apply sub t)
 typecheck :: MonadInfer m => [Assump] -> Expr -> m Scheme
 typecheck sctx se = (\(_, t) -> quantify (tvs t) t) <$> go sctx se
   where
-    go ctx (Var i)       = ([] ,) <$> (find ctx i >>= freshen)
+    go ctx (Var i)       = ((,) []) <$> (find ctx i >>= freshen)
     go ctx (Lam i e)     =
         do t1       <- fresh
            (s1, t2) <- go ((i :>: Scheme 0 t1) : ctx) e
@@ -226,7 +226,7 @@ typeProgram (Program p' e') = evalState (runErrorT (go [] p')) [(1::Int)..]
   where
     go ctx []           =
         let ass = map (\(i :>: sc) -> (i, sc)) $ ctx
-        in  (ass,) <$> typecheck ctx e'
+        in  ((,) ass) <$> typecheck ctx e'
     go ctx ((i, e) : p) =
         do put [1..]
            sc <- typecheck ctx e

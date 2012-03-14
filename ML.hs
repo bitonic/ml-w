@@ -1,32 +1,34 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
--- | This module defines some datatypes to represent a minimal ML-like
---   language, plus parsing and pretty-printing functions.
---
---   The syntax is:
---
--- @
--- program     ::= declaration ';' program | expression
--- declaration ::= id '=' expression
--- id          ::= [a-zA-Z][a-zA-Z0-9_]*
--- ids         ::= id+
--- expression  ::= id
---              | '(' '\' ids . expression ')'
---              | '(' expression expression ')'
---              | '(' 'let' id '=' expression 'in' expression ')'
---              | '(' 'fix' id . expression ')'
--- @
---
---   We'll omit parenthesis in the usual way @a b c@ is equivalent to @(a b) c@.
---
---   Example:
---
--- @
--- s = \\ x y z . x z (y z);
--- k = \\ x y . x;
--- i = \\ x . x;
--- k i;
--- @
+{-|
+This module defines some datatypes to represent a minimal ML-like language, plus
+parsing and pretty-printing functions.
+
+The syntax is:
+
+@
+program     ::= declaration ';' program | expression
+declaration ::= id '=' expression
+id          ::= [a-zA-Z][a-zA-Z0-9_]*
+ids         ::= id+
+expression  ::= id
+             | '(' '\' ids . expression ')'
+             | '(' expression expression ')'
+             | '(' 'let' id '=' expression 'in' expression ')'
+             | '(' 'fix' id . expression ')'
+@
+
+We'll omit parenthesis in the usual way @a b c@ is equivalent to @(a b) c@.
+
+Example:
+
+@
+s = \\ x y z . x z (y z);
+k = \\ x y . x;
+i = \\ x . x;
+k i;
+@
+-}
 module ML
     ( -- * Abstract syntax tree
       Id

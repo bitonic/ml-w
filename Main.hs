@@ -1,4 +1,4 @@
-module Main where
+module Main (main) where
 
 import Text.PrettyPrint
 
@@ -20,6 +20,16 @@ showTypes (Program decls' e') (ts', t') =
         ppDecls decls ts
     ppDecls _ _ = error "ppDecls: lists of different length"
 
+{-|
+Reads a 'Program' file from standard input, parses it, typechecks it,
+prints the types and evaluates it.
+
+Example:
+
+@
+cat tests\/ski.ml | ./ML
+@
+-}
 main :: IO ()
 main = do
     s <- getContents
