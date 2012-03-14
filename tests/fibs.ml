@@ -1,6 +1,6 @@
 const     = \x y . x;
 flip      = \f x y . f y x;
-undefined = fix g. g;
+undefined = fix g . g;
 
 zero   = \f x . x;
 succ   = \n f x . f (n f x);
@@ -15,4 +15,4 @@ false = flip const;
 
 iszero = \n . n (const false) true;
 
-plus zero zero;
+undefined;
