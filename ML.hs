@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+>{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 {-|
 This module defines some datatypes to represent a minimal ML-like language, plus
@@ -87,7 +87,9 @@ type Decl = (Id, Expr)
 data Program = Program [Decl] Expr
     deriving Eq
 
--- Parsing
+-------------------------------------------------------------------------------
+-- Parsing --------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 mlDef :: LanguageDef ()
 mlDef = LanguageDef
@@ -152,7 +154,9 @@ instance Read Expr where
 instance Read Program where
     readsPrec _ = readParse program
 
--- Pretty printing
+-------------------------------------------------------------------------------
+-- Pretty printing ------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 pdot                    = text "."
 
