@@ -1,4 +1,4 @@
->{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 {-|
 This module defines some datatypes to represent a minimal ML-like language, plus
