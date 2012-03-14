@@ -5,6 +5,8 @@ module Eval
     , evalExpr      
     , stepExpr'
     , evalExpr'
+    , evalProgram
+    , evalProgram'
     ) where
 
 import Control.Monad.Error
@@ -92,3 +94,13 @@ stepExpr' =
 evalExpr' :: Expr -> Expr
 evalExpr' =
     either (\err -> error $ "Eval.evalExpr': " ++ show err) id . evalExpr
+
+evalProgram :: Program -> Either EvalError Expr
+evalProgram (Program decls' e'') =
+    runIdentity . runErrorT . evaluate $ substs e'' decls'
+  where
+    substs = foldr (\(i, e') e -> subst i e e')
+
+evalProgram' :: Program -> Expr
+evalProgram' = 
+    either (\err -> error $ "Eval.evalProgram': " ++ show err) id . evalProgram

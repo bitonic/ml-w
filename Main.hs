@@ -1,7 +1,5 @@
 module Main where
 
-import System.IO (getContents)
-
 import Text.PrettyPrint
 
 import Eval
@@ -21,7 +19,7 @@ showTypes (Program decls' e') (ts', t') =
         (text i <+> equals <+> prettyExpr e)  $$
         ppDecls decls ts
     ppDecls _ _ = error "ppDecls: lists of different length"
-    
+
 main :: IO ()
 main = do
     s <- getContents
@@ -32,4 +30,4 @@ main = do
             Right ts -> do
                 putStrLn $ showTypes p ts
                 putStrLn "\nEvaluating program...\n"
-                
+                print . evalProgram' $ p
