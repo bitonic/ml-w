@@ -15,4 +15,4 @@ false = flip const;
 
 iszero = \n . n (const false) true;
 
-undefined;
+plus one zero;

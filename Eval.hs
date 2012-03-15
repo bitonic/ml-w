@@ -23,7 +23,13 @@ data EvalError
       -- ^ Trying to apply something to a non-function.
     | EvalError
       -- ^ Needed for the 'Error' instance.
-    deriving (Eq, Show)
+    deriving Eq
+
+instance Show EvalError where
+    show (NonFunctionApplication e1 e2) =
+        "EvalError: Trying to apply '" ++ show e2 ++ "' to non-function '" ++
+        show e1 ++ "'."
+    show EvalError                      = "Generic EvalError"
 
 instance Error EvalError where
     noMsg = EvalError
@@ -33,24 +39,26 @@ instance MonadEval (ErrorT EvalError Identity)
 
 -- | Performs beta reduction. See comment in 'stepExpr'.
 step :: MonadEval m => Expr -> m (Maybe Expr)
-step (Var _)       = return Nothing
 step (Lam i e)     = (Lam i <$>) <$> step e
-step (App e1 e2)   =
-    do e2M <- step e2
-       case e2M of
-           Just e2' -> return $ Just (App e1 e2')
-           Nothing  -> Just <$> apply e1 e2
+step (App e1 e2)   = apply e1 e2
+-- We could desugar to an abstraction, we leave the let for clarity.
 step (Let i e1 e2) =
     do e1M <- step e1
-       case e1M of
-           Just e1' -> return $ Just (Let i e1' e2)
-           Nothing  -> return $ Just (subst i e2 e1)
+       return . Just $ case e1M of
+           Just e1' -> Let i e1' e2
+           Nothing  -> subst i e2 e1
 step (Fix i e)     = return $ Just (subst i e (Fix i e))
+step _             = return Nothing
 
--- | Applies the second expression to the first.
-apply :: MonadEval m => Expr -> Expr -> m Expr
-apply (Lam i e1) e2  = return $ subst i e1 e2
-apply e1         e2  = throwError $ NonFunctionApplication e1 e2
+-- | Tries to apply the second expression to the first.
+apply :: MonadEval m => Expr -> Expr -> m (Maybe Expr)
+apply (Lam i e1) e2 =
+    do e2M <- step e2
+       return . Just $ case e2M of
+           Nothing  -> subst i e1 e2
+           Just e2' -> App (Lam i e1) e2'
+apply e1@(Var _) e2 = (App e1 <$>) <$> step e2
+apply e1         e2 = (flip App e2 <$>) <$> step e1
 
 -- | Performs substitution
 subst :: Id
@@ -78,6 +86,10 @@ evaluate e = maybe (return e) evaluate =<< step e
 --
 --   We evaluate to full normal form (in other words we evaluate inside lambdas)
 --   in an eager manner (when applying we evaluate the arguments first).
+--
+--   This function does not check that all the variables are bound. It simply
+--   performs substitution with applications and lets. In other words, ugly
+--   thing can happen! Typecheck your expressions before.
 stepExpr :: Expr -> Either EvalError (Maybe Expr)
 stepExpr = runIdentity . runErrorT . step
 
