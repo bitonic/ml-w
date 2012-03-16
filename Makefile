@@ -25,7 +25,7 @@ loadhugs:
 	hugs $(HUGS_OPTS) $(MAIN)
 
 run:
-	runhaskell $(GHCI_OPTS) Main.hs
+	runghc $(GHCI_OPTS) Main.hs
 
 runhugs:
 	runhugs $(HUGS_OPTS) Main.hs

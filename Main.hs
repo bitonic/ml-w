@@ -2,7 +2,6 @@ module Main (main) where
 
 import Text.PrettyPrint
 
-import Eval
 import ML
 import TypeInfer
 
@@ -21,8 +20,7 @@ showTypes (Program decls' e') (ts', t') =
     ppDecls _ _ = error "ppDecls: lists of different length"
 
 {-|
-Reads a 'Program' file from standard input, parses it, typechecks it,
-prints the types and evaluates it.
+Reads a 'Program' file from standard input, parses it and typechecks it.
 
 Example:
 
@@ -37,7 +35,4 @@ main = do
         Left err -> error $ "Parse error: " ++ show err
         Right p  -> case typeProgram p of
             Left err -> error $ "Type error: " ++ show err
-            Right ts -> do
-                putStrLn $ showTypes p ts
-                putStrLn "\nEvaluating program...\n"
-                print . evalProgram' $ p
+            Right ts -> putStrLn $ showTypes p ts
