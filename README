@@ -6,10 +6,8 @@ Haskell data type, plus functions to parse files and pretty print the datatype.
 
 The 'TypeInfer' module contains the W algorithm itself.
 
-The 'Eval' module provides simple evaluation functions for the language.
-
-The 'Main' module contains a program that parses, typechecks and runs programs
-reading from standard input.
+The 'Main' module contains a program that parses and typechecks programs reading
+from standard input.
 
 The program in 'Main' can be compiled with @make@, and the documentation with
 @make docs@. It should work fine with @GHC@ version 6 or 7 (and maybe more). It
