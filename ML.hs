@@ -88,7 +88,7 @@ data Program = Program [Decl] Expr
     deriving Eq
 
 -------------------------------------------------------------------------------
--- Parsing --------------------------------------------------------------------
+-- Lexing ---------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
 mlDef :: LanguageDef ()
@@ -121,26 +121,30 @@ lsemi   = P.semi lexer
 
 parens  = P.parens lexer
 
-var     = Var <$> lid
-lam     = flip (foldr Lam) <$> (llam *> many1 lid) <*> (ldot *> expr)
-let'    = Let <$> (llet *> lid) <*> (lequal *> expr) <*> (lin *> expr)
-fix     = Fix <$> (lfix *> lid) <*> (ldot *> expr)
-expr    = lam <|> (foldl App <$> p <*> many p)
-  where p = parens (lam <|> expr) <|> try let' <|> try fix <|> var
+-------------------------------------------------------------------------------
+-- Parsing --------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+pvar     = Var <$> lid
+plam     = flip (foldr Lam) <$> (llam *> many1 lid) <*> (ldot *> pexpr)
+plet     = Let <$> (llet *> lid) <*> (lequal *> pexpr) <*> (lin *> pexpr)
+pfix     = Fix <$> (lfix *> lid) <*> (ldot *> pexpr)
+pexpr    = plam <|> (foldl App <$> p <*> many p)
+  where p = parens (plam <|> pexpr) <|> try plet <|> try pfix <|> pvar
             <?> "expression"
 
-decl    = (,) <$> lid <*> (lequal *> expr <* lsemi)
-program = Program <$> many (try decl) <*> (expr <* lsemi)
+pdecl    = (,) <$> lid <*> (lequal *> pexpr <* lsemi)
+pprogram = Program <$> many (try pdecl) <*> (pexpr <* lsemi)
 
 parseExpr     :: String -> Either ParseError Expr
-parseExpr     = parse (spaces *> expr <* eof) ""
+parseExpr     = parse (spaces *> pexpr <* eof) ""
 parseExpr'    :: FilePath -> IO (Either ParseError Expr)
-parseExpr' fn = parse (spaces *> expr <* eof) fn <$> readFile fn
+parseExpr' fn = parse (spaces *> pexpr <* eof) fn <$> readFile fn
 
 parseProgram     :: String -> Either ParseError Program
-parseProgram     = parse (spaces *> program <* eof) ""
+parseProgram     = parse (spaces *> pprogram <* eof) ""
 parseProgram'    :: FilePath -> IO (Either ParseError Program)
-parseProgram' fn = parse (spaces *> program <* eof) fn <$> readFile fn
+parseProgram' fn = parse (spaces *> pprogram <* eof) fn <$> readFile fn
 
 readParse :: Parser a -> String -> [(a, String)]
 readParse p = either (const []) (: []) . parse p' ""
@@ -149,47 +153,47 @@ readParse p = either (const []) (: []) . parse p' ""
                   return (x, input)
 
 instance Read Expr where
-    readsPrec _ = readParse expr
+    readsPrec _ = readParse pexpr
 
 instance Read Program where
-    readsPrec _ = readParse program
+    readsPrec _ = readParse pprogram
 
 -------------------------------------------------------------------------------
 -- Pretty printing ------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-pdot                    = text "."
+ppdot                    = text "."
 
-plam (Lam i e)          = text i <+> plam e
-plam e                  = pdot <+> pexpr e
+pplam (Lam i e)          = text i <+> pplam e
+pplam e                  = ppdot <+> ppexpr e
 
-pappR e@(Var _)         = pexpr e
-pappR e                 = PP.parens (pexpr e)
+ppappR e@(Var _)         = ppexpr e
+ppappR e                 = PP.parens (ppexpr e)
 
-papp l@(Var _) r        = pexpr l <+> pappR r
-papp (App l m) r        = papp l m <+> pappR r
-papp l         r        = PP.parens (pexpr l) <+> pappR r
+ppapp l@(Var _) r        = ppexpr l <+> ppappR r
+ppapp (App l m) r        = ppapp l m <+> ppappR r
+ppapp l         r        = PP.parens (ppexpr l) <+> ppappR r
 
-pexpr (Var i)           = text i
-pexpr e@(Lam _ _)       = text "\\" <> plam e
-pexpr (App l r)         = papp l r
-pexpr (Let i e1 e2)     = (text "let" <+> text i <+> equals <+> pexpr e1) $$
-                          (text "in" <+> pexpr e2)
-pexpr (Fix i e)         = text "fix" <+> text i <> pdot <+> pexpr e
+ppexpr (Var i)           = text i
+ppexpr e@(Lam _ _)       = text "\\" <> pplam e
+ppexpr (App l r)         = ppapp l r
+ppexpr (Let i e1 e2)     = (text "let" <+> text i <+> equals <+> ppexpr e1) $$
+                           (text "in" <+> ppexpr e2)
+ppexpr (Fix i e)         = text "fix" <+> text i <> ppdot <+> ppexpr e
 
-pdecl (i, e)            = text i <+> equals <+> pexpr e <> PP.semi
+ppdecl (i, e)            = text i <+> equals <+> ppexpr e <> PP.semi
 
-pprogram (Program es e) = vcat $ map pdecl es ++ [pexpr e <> PP.semi]
+ppprogram (Program es e) = vcat $ map ppdecl es ++ [ppexpr e <> PP.semi]
 
 prettyExpr    :: Expr -> Doc
-prettyExpr    = pexpr
+prettyExpr    = ppexpr
 prettyDecl    :: (Id, Expr) -> Doc
-prettyDecl    = pdecl
+prettyDecl    = ppdecl
 prettyProgram :: Program -> Doc
-prettyProgram = pprogram
+prettyProgram = ppprogram
 
 instance Show Expr where
-    show = render . pexpr
+    show = render . ppexpr
 
 instance Show Program where
-    show = render . pprogram
+    show = render . ppprogram

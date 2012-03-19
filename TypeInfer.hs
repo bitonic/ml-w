@@ -235,20 +235,20 @@ typeProgram (Program p' e') = evalState (runErrorT (go [] p')) [(1::Int)..]
 -- Pretty printing ------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-type' :: Type -> Doc
-type' (TyGen i)               = int i
-type' (TyVar i)               = text "v" <> int i
-type' (TyArr t1@(TyGen _) t2) = type' t1 <+> text "->" <+> type' t2
-type' (TyArr t1           t2) = parens (type' t1) <+> text "->" <+> type' t2
+pptype :: Type -> Doc
+pptype (TyGen i)               = int i
+pptype (TyVar i)               = text "v" <> int i
+pptype (TyArr t1@(TyGen _) t2) = pptype t1 <+> text "->" <+> pptype t2
+pptype (TyArr t1           t2) = parens (pptype t1) <+> text "->" <+> pptype t2
 
 prettyType :: Type -> Doc
-prettyType = type'
+prettyType = pptype
 
 prettyScheme :: Scheme -> Doc
 prettyScheme (Scheme _ t) = prettyType t
 
 instance Show Type where
-    show = render . type'
+    show = render . pptype
 
 instance Show Scheme where
-    show (Scheme _ t) = render . type' $ t
+    show (Scheme _ t) = render . pptype $ t
