@@ -1,0 +1,30 @@
+name:               ml-w
+version:            0.1
+synopsis:           Minimal ML language to to demonstrate the W type
+                    infererence algorithm.
+author:             Francesco Mazzoli <f@mazzo.li>
+build-type:         Simple
+cabal-version:      >= 1.2
+description:
+    .
+    This package implements a minimal ML-like language to demonstrate how the W
+    algorithm works.
+    .
+    The 'ML' module contains the definition of the language in the form of an
+    Haskell data type, plus functions to parse files and pretty print the
+    datatype.
+    .
+    The 'TypeInfer' module contains the W algorithm itself.
+    .
+    The 'Main' module contains a program that parses and typechecks programs
+    reading from standard input.
+    .
+    The program in 'Main' can be compiled with @make@, and the documentation
+    with @make docs@. It should work fine with @GHC@ version 6 or 7 (and
+    maybe more). It can also be loaded and ran with Hugs turning the
+    extensions on (using the @-98@ flag).
+
+executable ML
+    main-is:        Main.hs
+    build-depends:  base >= 3 && < 5, mtl, parsec, pretty
+    GHC-options:    -Wall

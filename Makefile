@@ -7,16 +7,16 @@ GHCI_OPTS= -Wall
 
 HUGS_OPTS= -98
 
-DOCS_DIR= docs
-PROLOGUE= README
-HADDOCK_OPTS= -o $(DOCS_DIR) -p $(PROLOGUE) -h
+HADDOCK_OPTS= --executables --html-location='http://hackage.haskell.org/packages/archive/$pkg/latest/doc/html'
+
+configure:
+	cabal configure
 
 all:
-	ghc -o $(EXEC_NAME) $(GHC_OPTS) $(MAIN)
+	cabal build
 
 docs:
-	mkdir -p $(DOCS_DIR)
-	haddock $(HADDOCK_OPTS) $(MAIN)
+	cabal haddock $(HADDOCK_OPTS)
 
 load:
 	ghci $(MAIN)
