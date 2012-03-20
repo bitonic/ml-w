@@ -7,7 +7,7 @@ GHCI_OPTS= -Wall
 
 HUGS_OPTS= -98
 
-HADDOCK_OPTS= --executables --html-location='http://hackage.haskell.org/packages/archive/$pkg/latest/doc/html'
+HADDOCK_OPTS=
 
 configure:
 	cabal configure
@@ -16,7 +16,8 @@ all:
 	cabal build
 
 docs:
-	cabal haddock $(HADDOCK_OPTS)
+	cabal haddock \
+	--executables --html-location='http://hackage.haskell.org/packages/archive/$$pkg/latest/doc/html'
 
 load:
 	ghci $(MAIN)
